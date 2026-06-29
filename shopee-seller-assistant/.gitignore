@@ -1,0 +1,18 @@
+# dependencies
+node_modules/
+# builds & generated
+.next/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+# test artifacts
+coverage/
+# env & local
+.env
+.env.local
+.env.*.local
+# logs & os
+npm-debug.log*
+yarn-error.log*
+.DS_Store
