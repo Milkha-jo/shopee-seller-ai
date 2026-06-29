@@ -1,18 +1,26 @@
 import type { NextRequest } from "next/server";
-import { getBackend } from "@/lib/server/backend";
-import { forward } from "@/lib/server/forward";
+import { handle, data, take } from "@/lib/server/http";
+import { getServices, getSellerId } from "@/lib/server/runtime";
+import { parseVersionBody } from "@apihttp/validate";
+import { presentVersion } from "@apihttp/present";
+import { notFound } from "@apihttp/errors";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const { http, sellerId } = await getBackend();
-  const body = await req.json();
-  return forward(() =>
-    http.put(`/api/fee-profiles/${params.id}`, { ...body, sellerProfileId: sellerId }),
-  );
+  return handle(async () => {
+    const sellerId = await getSellerId();
+    const version = parseVersionBody(await req.json(), sellerId);
+    const updated = take(await getServices().feeProfile.replaceVersion(params.id, version));
+    return data(presentVersion(updated), 200);
+  });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const { http } = await getBackend();
-  return forward(() => http.delete(`/api/fee-profiles/${params.id}`));
+  return handle(async () => {
+    const removed = take(await getServices().feeProfile.deactivateVersion(params.id));
+    if (!removed) throw notFound("fee profile not found");
+    return data({ deactivated: true }, 200);
+  });
 }
