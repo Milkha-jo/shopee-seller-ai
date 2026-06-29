@@ -1,16 +1,17 @@
 import type { NextRequest } from "next/server";
-import { getBackend } from "@/lib/server/backend";
-import { forward } from "@/lib/server/forward";
+import { handle, data, take } from "@/lib/server/http";
+import { getServices, getSellerId } from "@/lib/server/runtime";
+import { parseBreakEvenBody } from "@apihttp/validate";
+import { presentBreakEven } from "@apihttp/present";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  const { http, sellerId } = await getBackend();
-  const body = await req.json();
-  return forward(() =>
-    http.post(`/api/calculations/break-even`, {
-      ...body,
-      sellerProfileId: sellerId,
-    }),
-  );
+  return handle(async () => {
+    const sellerProfileId = await getSellerId();
+    const body = parseBreakEvenBody({ ...(await req.json()), sellerProfileId });
+    const result = take(await getServices().pricing.calculateBreakEven(body));
+    return data(presentBreakEven(result), 200);
+  });
 }
