@@ -36,7 +36,9 @@ function toFormValues(v: FeeProfileVersion): FeeProfileValues {
     sourceReference: v.profile.sourceReference,
     rules: order.map((ft) => {
       const r = v.rules.find((x) => x.feeType === ft);
-      return { feeType: ft, rate: r?.rate ?? "0", cap: r?.cap ?? "" };
+      // Stored as decimal (e.g. "0.09"); show as percentage (e.g. "9").
+      const pct = r ? Math.round(Number(r.rate) * 100 * 1000) / 1000 : 0;
+      return { feeType: ft, rate: String(pct), cap: r?.cap ?? "" };
     }),
   };
 }
