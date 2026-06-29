@@ -16,7 +16,13 @@
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "baseUrl": ".",
-    "paths": { "@/*": ["./*"] }
+    "paths": {
+      "@/*": ["./*"],
+      "@core/*": ["../calc-core/src/*"],
+      "@repo/*": ["../repositories/src/*"],
+      "@svc/*": ["../services/src/*"],
+      "@apihttp/*": ["../api/src/http/*"]
+    }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
