@@ -54,6 +54,9 @@ async function unwrap<T>(p: Promise<{ data: { data: T } }>): Promise<T> {
 export const api = {
   getSeller: (): Promise<Seller> => unwrap<Seller>(client.get("/seller")),
 
+  updateStoreName: (storeName: string): Promise<Seller> =>
+    unwrap<Seller>(client.patch("/seller", { storeName })),
+
   getActiveFeeProfile: (asOf: string): Promise<FeeProfileVersion> =>
     unwrap<FeeProfileVersion>(client.get("/fee-profile", { params: { asOf } })),
 
