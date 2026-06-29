@@ -40,8 +40,12 @@ export default function CalculatorPage() {
         <p className="text-muted-foreground">
           All fees, profit, margin and markup are computed by the backend engine.
         </p>
+        <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Reminder: Shopee also charges Biaya Proses Pesanan (about Rp1.250 per
+          item), which this tool does not include. Add it into the Packaging cost
+          (or Other cost) field — for N items, enter N x 1.250.
+        </p>
       </div>
-
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-2">
           <Card>
