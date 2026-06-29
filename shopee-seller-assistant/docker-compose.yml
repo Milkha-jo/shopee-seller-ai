@@ -1,0 +1,74 @@
+# Shopee Seller Assistant — full stack.
+#
+# Start everything with one command:
+#   docker compose --env-file .env up --build
+#
+# Services:
+#   db   - PostgreSQL 16. The schema migration is applied automatically on the
+#          first boot of a fresh volume (mounted into docker-entrypoint-initdb.d).
+#   api  - Express REST API (port 4000), run from TypeScript via tsx.
+#   web  - Next.js app (port 3000). Its server-side BFF talks to api over the
+#          internal network; the browser only ever calls the web app.
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-shopee}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shopee}
+      POSTGRES_DB: ${POSTGRES_DB:-shopee}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shopee} -d ${POSTGRES_DB:-shopee}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Not published to the host by default; uncomment to inspect locally.
+    # ports:
+    #   - "5432:5432"
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      DATABASE_URL: postgres://${POSTGRES_USER:-shopee}:${POSTGRES_PASSWORD:-shopee}@db:5432/${POSTGRES_DB:-shopee}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env (>=16 chars)}
+      AUTH_TOKEN_TTL: ${AUTH_TOKEN_TTL:-3600}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    # Internal only by default; uncomment to call the API directly.
+    # ports:
+    #   - "4000:4000"
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      BACKEND_URL: http://api:4000
+      STORE_NAME: ${STORE_NAME:-Toko Saya}
+      SELLER_TIER: ${SELLER_TIER:-REGULAR}
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+
+volumes:
+  db-data:
