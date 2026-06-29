@@ -6,6 +6,7 @@ import { useBreakEven } from "@/hooks/useRecommend";
 import { ApiError } from "@/services/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalculatorForm } from "@/components/CalculatorForm";
+import { PriceFinder } from "@/components/PriceFinder";
 import { ProfitResultPanel } from "@/components/ProfitResultPanel";
 import { RecommendationPanel } from "@/components/RecommendationPanel";
 import { ProfitPriceChart } from "@/components/charts/ProfitPriceChart";
@@ -46,6 +47,9 @@ export default function CalculatorPage() {
           (or Other cost) field — for N items, enter N x 1.250.
         </p>
       </div>
+
+      <PriceFinder />
+
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-2">
           <Card>
