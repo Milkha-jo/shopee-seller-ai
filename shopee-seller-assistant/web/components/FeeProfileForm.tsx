@@ -50,8 +50,8 @@ export function FeeProfileForm({
               <p className="mt-2 text-sm font-medium">{feeLabel(DEFAULT_FEE_PROFILE.rules[i]!.feeType)}</p>
               <input type="hidden" {...register(`rules.${i}.feeType` as const)} />
             </div>
-            <Field label="Rate (0–1)" error={errors.rules?.[i]?.rate?.message}>
-              <Input step="0.0001" type="number" {...register(`rules.${i}.rate` as const)} />
+            <Field label="Rate (%)" error={errors.rules?.[i]?.rate?.message}>
+              <Input step="0.01" type="number" placeholder="e.g. 9 for 9%" {...register(`rules.${i}.rate` as const)} />
             </Field>
             <Field label="Cap (optional)" error={errors.rules?.[i]?.cap?.message}>
               <Input type="number" placeholder="none" {...register(`rules.${i}.cap` as const)} />
