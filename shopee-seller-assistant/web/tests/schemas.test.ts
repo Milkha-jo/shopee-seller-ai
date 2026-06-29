@@ -96,17 +96,26 @@ describe("feeProfileSchema / toFeeProfileRequest", () => {
   it("validates the default profile", () => {
     expect(feeProfileSchema.safeParse(DEFAULT_FEE_PROFILE).success).toBe(true);
   });
-  it("rejects rate above 1", () => {
+  it("rejects rate above 100", () => {
     const bad = {
       ...DEFAULT_FEE_PROFILE,
-      rules: DEFAULT_FEE_PROFILE.rules.map((r, i) => (i === 0 ? { ...r, rate: "1.5" } : r)),
+      rules: DEFAULT_FEE_PROFILE.rules.map((r, i) => (i === 0 ? { ...r, rate: "150" } : r)),
     };
     expect(feeProfileSchema.safeParse(bad).success).toBe(false);
   });
-  it("maps empty cap to null", () => {
+  it("converts percentage rate to decimal and maps empty cap to null", () => {
     const out = toFeeProfileRequest(DEFAULT_FEE_PROFILE);
+    expect(out.rules[0]?.rate).toBe("0.02"); // ADMIN 2% -> 0.02
+    expect(out.rules[1]?.rate).toBe("0.04"); // SERVICE 4% -> 0.04
     expect(out.rules[1]?.cap).toBeNull(); // SERVICE has empty cap
     expect(out.rules[0]?.cap).toBe("10000");
     expect(out.endDate).toBeNull();
+  });
+  it("converts a fractional percentage like 8.25 correctly", () => {
+    const v = {
+      ...DEFAULT_FEE_PROFILE,
+      rules: DEFAULT_FEE_PROFILE.rules.map((r, i) => (i === 0 ? { ...r, rate: "8.25" } : r)),
+    };
+    expect(toFeeProfileRequest(v).rules[0]?.rate).toBe("0.0825");
   });
 });
