@@ -1,14 +1,17 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Calculator, ReceiptText, Store, TrendingUp } from "lucide-react";
-import { useSeller } from "@/hooks/useSeller";
+import { toast } from "sonner";
+import { ArrowRight, Calculator, Pencil, ReceiptText, Store, TrendingUp } from "lucide-react";
+import { useSeller, useUpdateStoreName } from "@/hooks/useSeller";
 import { useActiveFeeProfile } from "@/hooks/useFeeProfile";
 import { api } from "@/services/api";
 import { ApiError } from "@/services/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { StatCard } from "@/components/StatCard";
 import { FeeRulesTable } from "@/components/FeeRulesTable";
 import { CardSkeleton, EmptyState, ErrorState } from "@/components/states";
@@ -45,7 +48,7 @@ export default function DashboardPage() {
         <ErrorState message="Could not load store details." onRetry={() => seller.refetch()} />
       ) : seller.data ? (
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard label="Store" value={seller.data.storeName} hint={seller.data.marketplace} icon={Store} />
+          <StoreNameCard name={seller.data.storeName} marketplace={seller.data.marketplace} />
           <StatCard label="Seller tier" value={tierLabel(seller.data.sellerTier)} />
           <StatCard
             label="Active fee profile"
@@ -156,6 +159,75 @@ export default function DashboardPage() {
         />
       </div>
     </div>
+  );
+}
+
+function StoreNameCard({ name, marketplace }: { name: string; marketplace: string }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(name);
+  const update = useUpdateStoreName();
+
+  const save = () => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      toast.error("Store name cannot be empty");
+      return;
+    }
+    update.mutate(trimmed, {
+      onSuccess: () => {
+        toast.success("Store name updated");
+        setEditing(false);
+      },
+      onError: (e) => toast.error(e instanceof Error ? e.message : "Update failed"),
+    });
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Store</span>
+          {!editing ? (
+            <button
+              type="button"
+              onClick={() => {
+                setValue(name);
+                setEditing(true);
+              }}
+              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+            >
+              <Pencil className="h-3 w-3" /> Edit
+            </button>
+          ) : null}
+        </div>
+        {!editing ? (
+          <div className="mt-2 flex items-center gap-2">
+            <Store className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <p className="text-lg font-semibold leading-tight">{name}</p>
+              <p className="text-xs text-muted-foreground">{marketplace}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-2 space-y-2">
+            <Input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder="Your store name"
+              maxLength={100}
+            />
+            <div className="flex gap-2">
+              <Button size="sm" onClick={save} disabled={update.isPending}>
+                {update.isPending ? "Saving…" : "Save"}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setEditing(false)} disabled={update.isPending}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
