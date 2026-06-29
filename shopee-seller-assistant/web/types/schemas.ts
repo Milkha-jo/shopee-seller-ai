@@ -113,8 +113,8 @@ const ruleSchema = z.object({
   rate: z
     .string()
     .trim()
-    .refine((v) => Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 1, {
-      message: "Rate must be a decimal between 0 and 1 (e.g. 0.02)",
+    .refine((v) => Number.isFinite(Number(v)) && Number(v) >= 0 && Number(v) <= 100, {
+      message: "Enter a percentage between 0 and 100 (e.g. 9 for 9%)",
     }),
   cap: optionalMoneyField,
 });
@@ -138,7 +138,9 @@ export function toFeeProfileRequest(v: FeeProfileValues): NewFeeProfileVersionIn
     sourceReference: v.sourceReference,
     rules: v.rules.map((r) => ({
       feeType: r.feeType,
-      rate: r.rate,
+      // Form holds a percentage (e.g. "9"); backend stores a decimal rate
+      // (e.g. "0.09"). Round to trim binary-float noise.
+      rate: String(Math.round((Number(r.rate) / 100) * 1e8) / 1e8),
       cap: r.cap === "" ? null : r.cap,
     })),
   };
@@ -149,8 +151,8 @@ export const DEFAULT_FEE_PROFILE: FeeProfileValues = {
   endDate: "",
   sourceReference: "shopee-id",
   rules: [
-    { feeType: "ADMIN", rate: "0.02", cap: "10000" },
-    { feeType: "SERVICE", rate: "0.04", cap: "" },
-    { feeType: "PAYMENT", rate: "0.02", cap: "" },
+    { feeType: "ADMIN", rate: "2", cap: "10000" },
+    { feeType: "SERVICE", rate: "4", cap: "" },
+    { feeType: "PAYMENT", rate: "2", cap: "" },
   ],
 };
