@@ -43,6 +43,12 @@ export function FeeProfileForm({
 
       <div className="space-y-3">
         <p className="text-sm font-medium">Fee rules</p>
+        <p className="text-xs text-muted-foreground">
+          Rate (%): enter the fee percentage (e.g. type 9 for 9%). Cap: the
+          maximum rupiah Shopee charges for that fee — leave empty if Shopee
+          states no maximum (most fees have none; only fill it when the fee
+          article says &ldquo;maksimal Rp…&rdquo;).
+        </p>
         {[0, 1, 2].map((i) => (
           <div key={i} className="grid items-end gap-3 rounded-lg border p-3 sm:grid-cols-3">
             <div>
