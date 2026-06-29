@@ -29,6 +29,7 @@ interface Runtime {
     pricing: PricingService;
   };
   auth: AuthService;
+  sellerRepo: SellerProfileRepository;
   sellerId: string | null;
 }
 
@@ -51,7 +52,7 @@ function build(): Runtime {
     }),
   };
   const auth = new AuthService({ users: new UserRepository(pool) });
-  return { pool, services, auth, sellerId: null };
+  return { pool, services, auth, sellerRepo: new SellerProfileRepository(pool), sellerId: null };
 }
 
 function runtime(): Runtime {
@@ -100,4 +101,14 @@ export async function getSellerId(): Promise<string> {
     throw new Error(`seed seller failed: ${JSON.stringify(sellerRes.error)}`);
   }
   return (r.sellerId = sellerRes.value.id);
+}
+
+/** Rename the single store (updates the seeded seller's store_name). */
+export async function updateStoreName(name: string) {
+  const r = runtime();
+  const id = await getSellerId();
+  const res = await r.sellerRepo.update(id, { storeName: name });
+  if (isErr(res)) throw new Error(`update failed: ${JSON.stringify(res.error)}`);
+  if (!res.value) throw new Error("seller not found");
+  return res.value;
 }
