@@ -1,14 +1,19 @@
 import type { NextRequest } from "next/server";
-import { getBackend } from "@/lib/server/backend";
-import { forward } from "@/lib/server/forward";
-import { todayIso } from "@/lib/format";
+import { handle, data, take } from "@/lib/server/http";
+import { getServices, getSellerId } from "@/lib/server/runtime";
+import { parseAsOfDate } from "@apihttp/validate";
+import { presentVersion } from "@apihttp/present";
+import { notFound } from "@apihttp/errors";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-  const { http, sellerId } = await getBackend();
-  const asOf = req.nextUrl.searchParams.get("asOf") ?? todayIso();
-  return forward(() =>
-    http.get(`/api/sellers/${sellerId}/fee-profile`, { params: { asOf } }),
-  );
+  return handle(async () => {
+    const asOf = parseAsOfDate(req.nextUrl.searchParams.get("asOf") ?? undefined);
+    const id = await getSellerId();
+    const version = take(await getServices().feeProfile.getActiveProfile(id, asOf));
+    if (version === null) throw notFound("no active fee profile");
+    return data(presentVersion(version), 200);
+  });
 }
