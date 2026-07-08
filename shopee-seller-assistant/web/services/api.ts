@@ -10,6 +10,8 @@ import type {
   RecommendRequestInput,
   RecommendResult,
   Seller,
+  Promo,
+  NewPromoInput,
 } from "@/types/api";
 
 // Same-origin client → this app's BFF route handlers. The browser never sends
@@ -80,4 +82,10 @@ export const api = {
 
   recommend: (input: RecommendRequestInput): Promise<RecommendResult> =>
     unwrap<RecommendResult>(client.post("/calculations/recommend", input)),
+
+  listPromos: (): Promise<Promo[]> => unwrap<Promo[]>(client.get("/promos")),
+  createPromo: (input: NewPromoInput): Promise<Promo> =>
+    unwrap<Promo>(client.post("/promos", input)),
+  deletePromo: (id: string): Promise<{ deleted: boolean }> =>
+    unwrap<{ deleted: boolean }>(client.delete(`/promos/${id}`)),
 };
