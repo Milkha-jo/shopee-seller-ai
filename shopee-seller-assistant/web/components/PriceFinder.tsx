@@ -180,8 +180,8 @@ function PriceResult({ result }: { result: RecommendResult }) {
         {rt ? <StatCard label="Margin" value={formatPercent(rt.marginPct)} /> : null}
       </div>
       <p className="text-xs text-muted-foreground">
-        Reminder: Shopee&rsquo;s Biaya Proses Pesanan (~Rp1.250/item) is not
-        included — add it to a cost field above if you want it factored in.
+        Shopee&rsquo;s Biaya Proses Pesanan (Rp1.250/item) is already included
+        automatically in this price.
       </p>
     </div>
   );
