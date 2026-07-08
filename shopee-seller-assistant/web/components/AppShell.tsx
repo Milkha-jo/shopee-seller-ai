@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calculator, LayoutDashboard, ReceiptText, Store } from "lucide-react";
+import { Calculator, LayoutDashboard, ReceiptText, Store, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/fee-profile", label: "Fee Profile", icon: ReceiptText },
   { href: "/calculator", label: "Calculator", icon: Calculator },
+  { href: "/promos", label: "Promos", icon: Tag },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
