@@ -1,15 +1,17 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Info, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StatCard } from "@/components/StatCard";
 import { CardSkeleton } from "@/components/states";
 import { useRecommend } from "@/hooks/useRecommend";
+import { usePromos } from "@/hooks/usePromos";
 import { ApiError } from "@/services/api";
 import { formatIDR, formatPercent, todayIso } from "@/lib/format";
 import { toRecommendRequest, type CalculatorValues } from "@/types/schemas";
@@ -39,7 +41,14 @@ export function PriceFinder() {
   const [asOfDate] = useState(todayIso());
   const [mode, setMode] = useState<RecommendationMode>("TARGET_PROFIT");
   const [target, setTarget] = useState("");
+  const [promoId, setPromoId] = useState("NONE");
   const recommend = useRecommend();
+  const promos = usePromos();
+
+  const selectedPromo = useMemo(
+    () => (promoId === "NONE" ? null : (promos.data ?? []).find((p) => p.id === promoId) ?? null),
+    [promoId, promos.data],
+  );
 
   const active = MODES.find((m) => m.id === mode)!;
   const needsTarget = active.requiresTarget && target.trim() === "";
@@ -51,17 +60,27 @@ export function PriceFinder() {
   };
 
   const onSubmit = () => {
+    const extraCost = selectedPromo ? selectedPromo.sellerCost : 0;
     const cv: CalculatorValues = {
       productCost: productCost || "0",
       shippingCost: shippingCost || "0",
       packagingCost: packagingCost || "0",
-      otherCost: otherCost || "0",
+      otherCost: String(Number(otherCost || "0") + extraCost),
       sellingPrice: "0",
       discountType: "NONE",
       discountValue: "",
       asOfDate,
     };
-    recommend.mutate(toRecommendRequest(cv, mode, target));
+    const req = toRecommendRequest(cv, mode, target);
+    // Apply the promo's buyer discount directly (stored as a decimal rate for %,
+    // rupiah for flat — exactly the backend's expected format).
+    if (selectedPromo && selectedPromo.buyerDiscountType !== "NONE") {
+      req.discount = {
+        type: selectedPromo.buyerDiscountType,
+        value: selectedPromo.buyerDiscountValue,
+      };
+    }
+    recommend.mutate(req);
   };
 
   return (
@@ -81,6 +100,35 @@ export function PriceFinder() {
           <Money label="Shipping cost" value={shippingCost} onChange={setShippingCost} />
           <Money label="Packaging cost" value={packagingCost} onChange={setPackagingCost} />
           <Money label="Other cost" value={otherCost} onChange={setOtherCost} />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Apply a promo / campaign (optional)</Label>
+          <Select value={promoId} onValueChange={setPromoId}>
+            <SelectTrigger><SelectValue placeholder="No promo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NONE">No promo</SelectItem>
+              {(promos.data ?? []).map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedPromo ? (
+            <p className="text-xs text-muted-foreground">
+              Applying <b>{selectedPromo.name}</b>:
+              {selectedPromo.sellerCost > 0 ? ` +${formatIDR(selectedPromo.sellerCost)} cost` : ""}
+              {selectedPromo.buyerDiscountType === "PERCENTAGE"
+                ? ` · buyer −${formatPercent(selectedPromo.buyerDiscountValue)}`
+                : selectedPromo.buyerDiscountType === "FLAT"
+                  ? ` · buyer −${formatIDR(selectedPromo.buyerDiscountValue ?? "0")}`
+                  : ""}
+              . The price below already covers it.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Manage promos on the Promos page. Selecting one adjusts the price to still hit your target.
+            </p>
+          )}
         </div>
 
         <Tabs value={mode} onValueChange={(v) => onMode(v as RecommendationMode)}>
