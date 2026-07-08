@@ -124,3 +124,27 @@ export interface ApiErrorBody {
   message: string;
   details?: unknown;
 }
+
+export type BuyerDiscountType = "NONE" | "PERCENTAGE" | "FLAT";
+
+export interface Promo {
+  id: string;
+  name: string;
+  sellerCost: number;
+  buyerDiscountType: BuyerDiscountType;
+  buyerDiscountValue: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface NewPromoInput {
+  name: string;
+  sellerCost: number;
+  buyerDiscountType: BuyerDiscountType;
+  buyerDiscountValue: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  notes: string | null;
+}
