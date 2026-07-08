@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import { toast } from "sonner";
 import { useProfit, useProfitSweep } from "@/hooks/useProfit";
 import { useBreakEven } from "@/hooks/useRecommend";
@@ -8,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CalculatorForm } from "@/components/CalculatorForm";
 import { PriceFinder } from "@/components/PriceFinder";
 import { ProfitResultPanel } from "@/components/ProfitResultPanel";
-import { RecommendationPanel } from "@/components/RecommendationPanel";
 import { ProfitPriceChart } from "@/components/charts/ProfitPriceChart";
 import { MarginChart } from "@/components/charts/MarginChart";
 import { CardSkeleton, EmptyState } from "@/components/states";
@@ -25,10 +23,8 @@ export default function CalculatorPage() {
   const profit = useProfit();
   const sweep = useProfitSweep();
   const breakEven = useBreakEven();
-  const [base, setBase] = useState<CalculatorValues | null>(null);
 
   const onSubmit = (values: CalculatorValues) => {
-    setBase(values);
     profit.mutate(toProfitRequest(values), { onError: (e) => toast.error(errMsg(e)) });
     sweep.mutate(toProfitRequest(values), { onError: () => undefined });
     breakEven.mutate(toBreakEvenRequest(values), { onError: () => undefined });
@@ -41,10 +37,10 @@ export default function CalculatorPage() {
         <p className="text-muted-foreground">
           All fees, profit, margin and markup are computed by the backend engine.
         </p>
-        <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-          Reminder: Shopee also charges Biaya Proses Pesanan (about Rp1.250 per
-          item), which this tool does not include. Add it into the Packaging cost
-          (or Other cost) field — for N items, enter N x 1.250.
+        <p className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          Note: Shopee&rsquo;s Biaya Proses Pesanan (Rp1.250 per item) is now
+          included automatically in every result — you don&rsquo;t need to add it
+          yourself.
         </p>
       </div>
 
@@ -105,8 +101,6 @@ export default function CalculatorPage() {
                   </CardContent>
                 </Card>
               </div>
-
-              <RecommendationPanel base={base} />
             </>
           ) : (
             <EmptyState
