@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CategoryPicker } from "@/components/CategoryPicker";
 import { feeLabel } from "@/lib/format";
 import { feeProfileSchema, type FeeProfileValues, DEFAULT_FEE_PROFILE } from "@/types/schemas";
 
@@ -21,6 +22,7 @@ export function FeeProfileForm({
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<FeeProfileValues>({
     resolver: zodResolver(feeProfileSchema),
@@ -40,6 +42,13 @@ export function FeeProfileForm({
           <Input placeholder="shopee-id-2026" {...register("sourceReference")} />
         </Field>
       </div>
+
+      <CategoryPicker
+        onPick={(pct, label) => {
+          setValue("rules.0.rate", String(pct), { shouldValidate: true, shouldDirty: true });
+          setValue("sourceReference", label, { shouldDirty: true });
+        }}
+      />
 
       <div className="space-y-3">
         <p className="text-sm font-medium">Fee rules</p>
