@@ -42,13 +42,22 @@ export type CalculatorValues = z.infer<typeof calculatorSchema>;
  * Map the four UI cost lines onto the backend's two-field cost model
  * (productCost + packagingCost). This is request preparation — a sum of the
  * user's own inputs — not a profit/fee calculation, which stays on the backend.
+ *
+ * Shopee's Biaya Proses Pesanan (Rp1.250 per completed transaction) is added
+ * automatically here, so every profit / break-even / price-finder result
+ * already accounts for it. It applies even when the admin fee is free.
  */
+export const ORDER_PROCESSING_FEE = 1250;
+
 export function deriveCostInputs(v: CalculatorValues): {
   productCost: string;
   packagingCost: string;
 } {
   const productSide =
-    Number(v.productCost) + Number(v.shippingCost) + Number(v.otherCost);
+    Number(v.productCost) +
+    Number(v.shippingCost) +
+    Number(v.otherCost) +
+    ORDER_PROCESSING_FEE;
   return { productCost: String(productSide), packagingCost: v.packagingCost };
 }
 
