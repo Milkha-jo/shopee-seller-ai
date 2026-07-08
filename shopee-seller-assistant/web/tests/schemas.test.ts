@@ -24,7 +24,7 @@ const baseCalc: CalculatorValues = {
 describe("toProfitRequest", () => {
   it("aggregates product+shipping+other into backend productCost, keeps packaging", () => {
     const r = toProfitRequest(baseCalc);
-    expect(r.costInputs.productCost).toBe("48000"); // 45000+2000+1000
+    expect(r.costInputs.productCost).toBe("49250"); // 45000+2000+1000 + 1250 order-processing fee
     expect(r.costInputs.packagingCost).toBe("3000");
     expect(r.discount).toEqual({ type: "NONE", value: null });
   });
@@ -41,7 +41,7 @@ describe("toProfitRequest", () => {
 describe("toBreakEvenRequest", () => {
   it("reuses the aggregated cost model and date, no selling price", () => {
     const r = toBreakEvenRequest(baseCalc);
-    expect(r.costInputs).toEqual({ productCost: "48000", packagingCost: "3000" });
+    expect(r.costInputs).toEqual({ productCost: "49250", packagingCost: "3000" });
     expect(r.asOfDate).toBe("2026-06-28");
     expect("sellingPrice" in r).toBe(false);
   });
@@ -57,7 +57,7 @@ describe("toRecommendRequest", () => {
     expect(r.mode).toBe("TARGET_PROFIT");
     expect(r.targetProfit).toBe("20000");
     expect(r.targetMargin).toBeUndefined();
-    expect(r.costInputs.productCost).toBe("48000");
+    expect(r.costInputs.productCost).toBe("49250");
     expect(r.discount).toEqual({ type: "PERCENTAGE", value: "0.1" });
   });
   it("TARGET_MARGIN converts percent to decimal rate", () => {
