@@ -112,3 +112,99 @@ export async function updateStoreName(name: string) {
   if (!res.value) throw new Error("seller not found");
   return res.value;
 }
+
+// ---------------------------------------------------------------------------
+// Promo / Campaign Library (backed by the `promos` table — see db 0002_promos.sql)
+// ---------------------------------------------------------------------------
+export type BuyerDiscountType = "NONE" | "PERCENTAGE" | "FLAT";
+
+export interface Promo {
+  id: string;
+  name: string;
+  sellerCost: number;
+  buyerDiscountType: BuyerDiscountType;
+  buyerDiscountValue: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+export interface NewPromo {
+  name: string;
+  sellerCost: number;
+  buyerDiscountType: BuyerDiscountType;
+  buyerDiscountValue: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  notes: string | null;
+}
+
+interface PromoRow {
+  id: string;
+  name: string;
+  seller_cost: string | number;
+  buyer_discount_type: BuyerDiscountType;
+  buyer_discount_value: string | null;
+  start_date: string | Date | null;
+  end_date: string | Date | null;
+  notes: string | null;
+  created_at: string | Date;
+}
+
+function mapPromo(r: PromoRow): Promo {
+  return {
+    id: r.id,
+    name: r.name,
+    sellerCost: Number(r.seller_cost),
+    buyerDiscountType: r.buyer_discount_type,
+    buyerDiscountValue: r.buyer_discount_value,
+    startDate: r.start_date === null ? null : String(r.start_date),
+    endDate: r.end_date === null ? null : String(r.end_date),
+    notes: r.notes,
+    createdAt: String(r.created_at),
+  };
+}
+
+export async function listPromos(): Promise<Promo[]> {
+  const r = runtime();
+  const id = await getSellerId();
+  const res = await r.pool.query(
+    "SELECT * FROM promos WHERE seller_profile_id = $1 ORDER BY created_at DESC",
+    [id],
+  );
+  return res.rows.map(mapPromo);
+}
+
+export async function createPromo(input: NewPromo): Promise<Promo> {
+  const r = runtime();
+  const id = await getSellerId();
+  const res = await r.pool.query(
+    `INSERT INTO promos
+       (seller_profile_id, name, seller_cost, buyer_discount_type,
+        buyer_discount_value, start_date, end_date, notes)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+     RETURNING *`,
+    [
+      id,
+      input.name,
+      Math.max(0, Math.round(input.sellerCost)),
+      input.buyerDiscountType,
+      input.buyerDiscountValue,
+      input.startDate,
+      input.endDate,
+      input.notes,
+    ],
+  );
+  return mapPromo(res.rows[0]);
+}
+
+export async function deletePromo(promoId: string): Promise<boolean> {
+  const r = runtime();
+  const id = await getSellerId();
+  const res = await r.pool.query(
+    "DELETE FROM promos WHERE id = $1 AND seller_profile_id = $2",
+    [promoId, id],
+  );
+  return (res.rowCount ?? 0) > 0;
+}
